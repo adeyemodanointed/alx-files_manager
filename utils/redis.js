@@ -1,14 +1,15 @@
-import { createClient } from "redis";
+import { createClient } from 'redis';
+
 class RedisClient {
-  constructor() {
+  constructor () {
     this.client = createClient();
 
-    this.client.on("error", (err) => {
+    this.client.on('error', (err) => {
       console.log(err);
     });
   }
 
-  isAlive() {
+  isAlive () {
     // return this.client.ping((err, response) => {
     //   console.log(response);
     //   if (response === "PONG") {
@@ -20,7 +21,7 @@ class RedisClient {
     return this.client.connected;
   }
 
-  async get(key) {
+  async get (key) {
     this.client.get(key, (err, result) => {
       if (err) {
         console.log(err);
@@ -30,20 +31,18 @@ class RedisClient {
     });
   }
 
-  async set(key, value, duration) {
+  async set (key, value, duration) {
     this.client.setex(key, duration, value, (err) => {
       if (err) {
         console.error(err);
-        return;
       }
     });
   }
 
-  async del(key) {
-    this.client.del(key, (err, result) => {
+  async del (key) {
+    this.client.del(key, (err) => {
       if (err) {
         console.error(err);
-        return;
       }
     });
   }
