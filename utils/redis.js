@@ -2,7 +2,7 @@ import { createClient } from 'redis';
 import { promisify } from 'util';
 
 class RedisClient {
-  constructor () {
+  constructor() {
     this.client = createClient();
 
     this.client.on('error', (err) => {
@@ -10,7 +10,7 @@ class RedisClient {
     });
   }
 
-  isAlive () {
+  isAlive() {
     // return this.client.ping((err, response) => {
     //   console.log(response);
     //   if (response === "PONG") {
@@ -22,13 +22,13 @@ class RedisClient {
     return this.client.connected;
   }
 
-  async get (key) {
+  async get(key) {
     const getAsync = promisify(this.client.get).bind(this.client);
     const value = await getAsync(key);
     return value;
   }
 
-  async set (key, value, duration) {
+  async set(key, value, duration) {
     this.client.setex(key, duration, value, (err) => {
       if (err) {
         console.error(err);
@@ -36,7 +36,7 @@ class RedisClient {
     });
   }
 
-  async del (key) {
+  async del(key) {
     this.client.del(key, (err) => {
       if (err) {
         console.error(err);
