@@ -20,7 +20,7 @@ class AuthController {
     if (user && sha1(password) === user.password) {
       const token = v4();
       const key = `auth_${token}`;
-      const resp = await redisClient.set(key, JSON.stringify(user), 24 * 60 * 60);
+      const resp = await redisClient.set(key, JSON.stringify(user._id), 24 * 60 * 60);
       console.log(resp);
       return res.status(200).json({ token });
     }
