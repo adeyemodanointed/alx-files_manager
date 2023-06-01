@@ -69,11 +69,92 @@ class FilesController {
         console.log(err);
       }
     });
-    const newFile = await files.insertOne({ ...uploadData, localPath: fullPath });
+    const newFile = await files.insertOne({
+      ...uploadData,
+      localPath: fullPath,
+    });
     return res.status(201).json({
       id: newFile.insertedId,
       ...uploadData,
     });
+  }
+
+  static async getShow(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const users = dbClient.db.collection('users');
+    const user = await users.findOne({ _id: ObjectId(userId) });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const fileId = req.params.id;
+    const files = dbClient.db.collection('files');
+    const file = await files.findOne(
+      { _id: ObjectId(fileId), userId: user._id },
+      {
+        projection: {
+          id: '$_id',
+          _id: 0,
+          name: 1,
+          type: 1,
+          isPublic: 1,
+          parentId: 1,
+          userId: 1,
+        },
+      },
+    );
+    if (file) {
+      return res.status(200).json(file);
+    }
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  static async getIndex(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const users = dbClient.db.collection('users');
+    const user = await users.findOne({ _id: ObjectId(userId) });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { parentId } = req.query;
+    const page = req.query.page || 0;
+    const files = dbClient.db.collection('files');
+    let filter;
+
+    if (parentId) {
+      filter = { parentId: ObjectId(parentId), userId };
+    } else {
+      filter = { userId };
+    }
+    const resultArray = await files
+      .aggregate([
+        { $match: filter },
+        { $skip: parseInt(page, 10) * 20 },
+        { $limit: 20 },
+        {
+          $project: {
+            id: '$_id',
+            _id: 0,
+            name: 1,
+            type: 1,
+            isPublic: 1,
+            parentId: 1,
+            userId: 1,
+          },
+        },
+      ])
+      .toArray();
+    return res.status(200).json(resultArray);
   }
 }
 
